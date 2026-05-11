@@ -3,6 +3,7 @@
 **Real-time notification mirroring between Android devices**
 
 NotiFlow lets you see notifications from one Android device on another — instantly. Install on both devices, pair via QR code, and you're set. No accounts, no ads, no trackers.
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-yellow?style=flat&logo=buy-me-a-coffee)](https://buymeacoffee.com/lexlebeau)
 
 ---
 
