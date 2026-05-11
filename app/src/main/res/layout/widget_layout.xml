@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@drawable/widget_background"
+    android:padding="8dp"
+    android:gravity="center_vertical"
+    android:id="@+id/widgetRoot">
+
+    <!-- Пауза/Плей -->
+    <ImageView
+        android:id="@+id/btnPlay"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_weight="1"
+        android:src="@drawable/ic_widget_play"
+        android:background="@drawable/widget_btn_bg"
+        android:padding="12dp"
+        android:layout_margin="4dp"
+        android:scaleType="fitCenter"/>
+
+    <!-- Только мессенджеры -->
+    <ImageView
+        android:id="@+id/btnMessengers"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_weight="1"
+        android:src="@drawable/ic_widget_messengers"
+        android:background="@drawable/widget_btn_bg"
+        android:padding="12dp"
+        android:layout_margin="4dp"
+        android:scaleType="fitCenter"/>
+
+    <!-- Геофенсинг -->
+    <ImageView
+        android:id="@+id/btnGeo"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_weight="1"
+        android:src="@drawable/ic_widget_geo"
+        android:background="@drawable/widget_btn_bg"
+        android:padding="12dp"
+        android:layout_margin="4dp"
+        android:scaleType="fitCenter"/>
+
+    <!-- Батарея сендера -->
+    <LinearLayout
+        android:id="@+id/btnBattery"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/widget_btn_bg"
+        android:layout_margin="4dp">
+
+        <ImageView
+            android:id="@+id/batteryIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_widget_battery"
+            android:scaleType="fitCenter"/>
+
+        <TextView
+            android:id="@+id/batteryText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="10sp"
+            android:textColor="#FFFFFF"
+            android:text="--"/>
+
+    </LinearLayout>
+
+</LinearLayout>

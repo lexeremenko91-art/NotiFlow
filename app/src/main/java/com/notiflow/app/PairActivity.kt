@@ -1,0 +1,220 @@
+package com.lexlebeau.notiflow
+
+import android.content.SharedPreferences
+import android.content.pm.ActivityInfo
+import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.database.ktx.database
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
+import com.journeyapps.barcodescanner.BarcodeEncoder
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanIntentResult
+import com.journeyapps.barcodescanner.ScanOptions
+import java.util.UUID
+import javax.crypto.KeyGenerator
+
+class PairActivity : AppCompatActivity() {
+
+    private lateinit var prefs: SharedPreferences
+    private lateinit var statusText: TextView
+    private lateinit var qrImage: ImageView
+    private lateinit var scanButton: Button
+    private lateinit var pairedIcon: TextView
+    private lateinit var pairedLabel: TextView
+    private lateinit var pairedCode: TextView
+    private lateinit var unpairButton: Button
+    private var receiverOnlineListener: ValueEventListener? = null
+    private var currentPairCode: String? = null
+
+    private val scanLauncher = registerForActivityResult(ScanContract()) { result: ScanIntentResult ->
+        if (result.contents != null) {
+            val parts = result.contents.split(":")
+            if (parts.size == 2) {
+                val pairCode = parts[0]
+                val aesKey = parts[1]
+                prefs.edit()
+                    .putString("pairCode", pairCode)
+                    .putString("aesKey", aesKey)
+                    .apply()
+                showPairedState(pairCode)
+                val mode = prefs.getString("mode", "sender")
+                if (mode == "receiver") {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
+                    }
+                    val serviceIntent = android.content.Intent(this, ReceiverService::class.java)
+                    startForegroundService(serviceIntent)
+                }
+            } else {
+                statusText.text = getString(R.string.pair_error)
+            }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        setContentView(R.layout.activity_pair)
+
+        prefs = getSharedPreferences("notiflow", MODE_PRIVATE)
+        statusText = findViewById(R.id.statusText)
+        qrImage = findViewById(R.id.qrImage)
+        scanButton = findViewById(R.id.scanButton)
+        pairedIcon = findViewById(R.id.pairedIcon)
+        pairedLabel = findViewById(R.id.pairedLabel)
+        pairedCode = findViewById(R.id.pairedCode)
+        unpairButton = findViewById(R.id.unpairButton)
+
+        val mode = prefs.getString("mode", "sender")
+        val existingPairCode = prefs.getString("pairCode", null)
+        val existingAesKey = prefs.getString("aesKey", null)
+
+        if (mode == "receiver") {
+            qrImage.visibility = View.GONE
+            if (existingPairCode != null) {
+                showPairedState(existingPairCode)
+            } else {
+                statusText.text = getString(R.string.pair_receiver_hint)
+            }
+        } else {
+            var pairCode = existingPairCode
+            var aesKey = existingAesKey
+
+            if (pairCode == null || aesKey == null) {
+                pairCode = UUID.randomUUID().toString().take(8).uppercase()
+                val keyGen = KeyGenerator.getInstance("AES")
+                keyGen.init(256)
+                aesKey = android.util.Base64.encodeToString(
+                    keyGen.generateKey().encoded,
+                    android.util.Base64.NO_WRAP
+                )
+                prefs.edit()
+                    .putString("pairCode", pairCode)
+                    .putString("aesKey", aesKey)
+                    .apply()
+            }
+
+            currentPairCode = pairCode
+
+            val qrContent = "$pairCode:$aesKey"
+            try {
+                val writer = MultiFormatWriter()
+                val matrix = writer.encode(qrContent, BarcodeFormat.QR_CODE, 400, 400)
+                val encoder = BarcodeEncoder()
+                val bitmap = encoder.createBitmap(matrix)
+                qrImage.setImageBitmap(bitmap)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            statusText.text = getString(R.string.pair_sender_hint, pairCode)
+            scanButton.visibility = View.GONE
+
+            // Слушаем receiverOnline в реальном времени
+            val finalPairCode = pairCode
+            receiverOnlineListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val timestamp = snapshot.getValue(Long::class.java) ?: 0L
+                    val isOnline = System.currentTimeMillis() - timestamp < 90000
+                    if (isOnline) {
+                        showPairedState(finalPairCode!!)
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            }
+            Firebase.database.reference
+                .child("pairs").child(pairCode!!).child("receiverOnline")
+                .addValueEventListener(receiverOnlineListener!!)
+        }
+
+        scanButton.setOnClickListener {
+            val options = ScanOptions()
+            options.setPrompt(getString(R.string.pair_scan_prompt))
+            options.setBeepEnabled(false)
+            options.setOrientationLocked(true)
+            scanLauncher.launch(options)
+        }
+
+        unpairButton.setOnClickListener {
+            prefs.edit()
+                .remove("pairCode")
+                .remove("aesKey")
+                .apply()
+            showUnpairedState()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Снимаем слушатель чтобы не утекал
+        currentPairCode?.let { pairCode ->
+            receiverOnlineListener?.let { listener ->
+                Firebase.database.reference
+                    .child("pairs").child(pairCode).child("receiverOnline")
+                    .removeEventListener(listener)
+            }
+        }
+    }
+
+    private fun showPairedState(pairCode: String) {
+        qrImage.visibility = View.GONE
+        statusText.visibility = View.GONE
+        scanButton.visibility = View.GONE
+
+        pairedIcon.visibility = View.VISIBLE
+        pairedLabel.visibility = View.VISIBLE
+        pairedCode.visibility = View.VISIBLE
+        unpairButton.visibility = View.VISIBLE
+
+        pairedCode.text = getString(R.string.paired_code, pairCode)
+    }
+
+    private fun showUnpairedState() {
+        pairedIcon.visibility = View.GONE
+        pairedLabel.visibility = View.GONE
+        pairedCode.visibility = View.GONE
+        unpairButton.visibility = View.GONE
+
+        val mode = prefs.getString("mode", "sender")
+        if (mode == "receiver") {
+            scanButton.visibility = View.VISIBLE
+            statusText.visibility = View.VISIBLE
+            statusText.text = getString(R.string.pair_receiver_hint)
+        } else {
+            qrImage.visibility = View.VISIBLE
+            statusText.visibility = View.VISIBLE
+            val pairCode = UUID.randomUUID().toString().take(8).uppercase()
+            val keyGen = KeyGenerator.getInstance("AES")
+            keyGen.init(256)
+            val aesKey = android.util.Base64.encodeToString(
+                keyGen.generateKey().encoded,
+                android.util.Base64.NO_WRAP
+            )
+            prefs.edit()
+                .putString("pairCode", pairCode)
+                .putString("aesKey", aesKey)
+                .apply()
+
+            val qrContent = "$pairCode:$aesKey"
+            try {
+                val writer = MultiFormatWriter()
+                val matrix = writer.encode(qrContent, BarcodeFormat.QR_CODE, 400, 400)
+                val encoder = BarcodeEncoder()
+                val bitmap = encoder.createBitmap(matrix)
+                qrImage.setImageBitmap(bitmap)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            statusText.text = getString(R.string.pair_sender_hint, pairCode)
+        }
+    }
+}

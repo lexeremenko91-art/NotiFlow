@@ -1,0 +1,81 @@
+<resources>
+    <string name="app_name">NotiFlow</string>
+
+    <!-- Главный экран -->
+    <string name="choose_mode">Выбери режим работы</string>
+    <string name="btn_sender">📤  Отправлять уведомления</string>
+    <string name="btn_receiver">📥  Получать уведомления</string>
+
+    <!-- Sender -->
+    <string name="sender_title">📤 Отправитель</string>
+    <string name="sender_status_ok">✅ Работает! Уведомления отправляются.</string>
+    <string name="sender_status_err">❌ Нужно разрешение на чтение уведомлений</string>
+    <string name="btn_allow_notifications">Разрешить чтение уведомлений</string>
+    <string name="btn_pair_receiver">🔗 Привязать получателя</string>
+    <string name="btn_settings">⚙️ Настройки</string>
+    <string name="btn_switch_mode">Сменить режим</string>
+    <string name="screen_filter_title">Фильтр экрана</string>
+    <string name="screen_filter_desc">Не отправлять уведомления когда экран сендера разблокирован</string>
+    <string name="screen_filter_switch">Включить фильтр экрана</string>
+    <string name="messengers_title">Только мессенджеры</string>
+    <string name="messengers_desc">Зеркалировать только сообщения и соцсети</string>
+    <string name="messengers_switch">Включить режим мессенджеров</string>
+
+    <!-- Receiver -->
+    <string name="receiver_title">📥 Получатель</string>
+    <string name="receiver_status_idle">Нажми Запустить</string>
+    <string name="receiver_status_ok">✅ Работает! Жду уведомления.</string>
+    <string name="btn_pair_sender">🔗 Привязать отправителя</string>
+    <string name="btn_start">▶ Запустить</string>
+    <string name="btn_history">📋 История уведомлений</string>
+
+    <!-- Pair -->
+    <string name="pair_title">🔗 Спаривание</string>
+    <string name="pair_scan_prompt">Наведи камеру на QR код отправителя</string>
+    <string name="pair_receiver_hint">Сканируй QR код с телефона-отправителя</string>
+    <string name="pair_sender_hint">Твой код: %1$s\nПокажи QR получателю для сканирования</string>
+    <string name="pair_success">✅ Спарено! Код: %1$s</string>
+    <string name="pair_error">❌ Неверный QR код</string>
+    <string name="btn_scan_qr">📷 Сканировать QR второго устройства</string>
+    <string name="paired_label">✅ Устройства спарены</string>
+    <string name="paired_code">Код пары: %1$s</string>
+    <string name="btn_unpair">Отвязать</string>
+
+    <!-- Settings -->
+    <string name="settings_title">⚙️ Настройки</string>
+    <string name="geo_title">📍 Геофенсинг</string>
+    <string name="geo_desc">Уведомления зеркалируются только когда ты не дома</string>
+    <string name="geo_switch">Включить геофенсинг</string>
+    <string name="geo_no_location">Домашняя точка не установлена</string>
+    <string name="geo_location">Дом: %1$s, %2$s</string>
+    <string name="geo_location_error">Не удалось получить локацию</string>
+    <string name="geo_radius">Радиус: %1$d м</string>
+    <string name="btn_set_home">📍 Установить домашнюю точку</string>
+    <string name="filter_title">📱 Фильтр приложений</string>
+    <string name="filter_desc">Выбери приложения которые хочешь зеркалить</string>
+    <string name="btn_hide">скрыть</string>
+    <string name="btn_hidden">скрыто</string>
+
+    <!-- History -->
+    <string name="history_title">📋 История уведомлений</string>
+    <string name="history_empty">Уведомлений пока нет</string>
+    <string name="btn_clear_history">Очистить</string>
+    <string name="history_search_hint">Поиск...</string>
+    <string name="history_clear_confirm_title">Очистить историю</string>
+    <string name="history_clear_confirm_message">Удалить все уведомления из истории?</string>
+    <string name="btn_cancel">Отмена</string>
+    <string name="history_deleted">Уведомление удалено</string>
+    <string name="btn_undo">Отменить</string>
+    <string name="history_filter_all">Все</string>
+
+    <!-- Status -->
+    <string name="status_online">🟢 Отправитель онлайн • %1$s</string>
+    <string name="status_offline">🔴 Отправитель не в сети</string>
+    <string name="btn_clear_all">Очистить всё</string>
+    <string name="status_connecting">⏳ Подключение...</string>
+    <string name="notification_channel_name">NotiFlow</string>
+    <string name="notification_waiting">Ожидание уведомлений...</string>
+    <string name="btn_privacy_policy">Privacy Policy</string>
+    <string name="btn_donate">☕ Buy me a coffee</string>
+    <string name="btn_reply">Ответить</string>
+</resources>

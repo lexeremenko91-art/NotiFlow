@@ -1,0 +1,81 @@
+<resources>
+    <string name="app_name">NotiFlow</string>
+
+    <!-- Pantalla principal -->
+    <string name="choose_mode">Elige el modo</string>
+    <string name="btn_sender">📤  Enviar notificaciones</string>
+    <string name="btn_receiver">📥  Recibir notificaciones</string>
+
+    <!-- Sender -->
+    <string name="sender_title">📤 Emisor</string>
+    <string name="sender_status_ok">✅ ¡Funcionando! Notificaciones enviadas.</string>
+    <string name="sender_status_err">❌ Se requiere acceso a notificaciones</string>
+    <string name="btn_allow_notifications">Permitir acceso a notificaciones</string>
+    <string name="btn_pair_receiver">🔗 Vincular receptor</string>
+    <string name="btn_settings">⚙️ Ajustes</string>
+    <string name="btn_switch_mode">Cambiar modo</string>
+    <string name="screen_filter_title">Filtro de pantalla</string>
+    <string name="screen_filter_desc">No enviar notificaciones cuando la pantalla del emisor está encendida</string>
+    <string name="screen_filter_switch">Activar filtro de pantalla</string>
+    <string name="messengers_title">Solo mensajeros</string>
+    <string name="messengers_desc">Solo reflejar mensajes y notificaciones sociales</string>
+    <string name="messengers_switch">Activar solo mensajeros</string>
+
+    <!-- Receiver -->
+    <string name="receiver_title">📥 Receptor</string>
+    <string name="receiver_status_idle">Pulsa Iniciar</string>
+    <string name="receiver_status_ok">✅ ¡Funcionando! Esperando notificaciones.</string>
+    <string name="btn_pair_sender">🔗 Vincular emisor</string>
+    <string name="btn_start">▶ Iniciar</string>
+    <string name="btn_history">📋 Historial de notificaciones</string>
+
+    <!-- Pair -->
+    <string name="pair_title">🔗 Vinculación</string>
+    <string name="pair_scan_prompt">Apunta la cámara al código QR del emisor</string>
+    <string name="pair_receiver_hint">Escanea el código QR del dispositivo emisor</string>
+    <string name="pair_sender_hint">Tu código: %1$s\nMuestra el QR al receptor para escanear</string>
+    <string name="pair_success">✅ ¡Vinculado! Código: %1$s</string>
+    <string name="pair_error">❌ Código QR inválido</string>
+    <string name="btn_scan_qr">📷 Escanear QR del segundo dispositivo</string>
+    <string name="paired_label">✅ Dispositivos vinculados</string>
+    <string name="paired_code">Código de par: %1$s</string>
+    <string name="btn_unpair">Desvincular</string>
+
+    <!-- Settings -->
+    <string name="settings_title">⚙️ Ajustes</string>
+    <string name="geo_title">📍 Geovalla</string>
+    <string name="geo_desc">Refleja notificaciones solo cuando estás fuera de casa</string>
+    <string name="geo_switch">Activar geovalla</string>
+    <string name="geo_no_location">Ubicación de casa no establecida</string>
+    <string name="geo_location">Casa: %1$s, %2$s</string>
+    <string name="geo_location_error">No se pudo obtener la ubicación</string>
+    <string name="geo_radius">Radio: %1$d m</string>
+    <string name="btn_set_home">📍 Establecer ubicación de casa</string>
+    <string name="filter_title">📱 Filtro de apps</string>
+    <string name="filter_desc">Elige las apps que quieres reflejar</string>
+    <string name="btn_hide">ocultar</string>
+    <string name="btn_hidden">oculto</string>
+
+    <!-- History -->
+    <string name="history_title">📋 Historial de notificaciones</string>
+    <string name="history_empty">Aún no hay notificaciones</string>
+    <string name="btn_clear_history">Limpiar</string>
+    <string name="history_search_hint">Buscar...</string>
+    <string name="history_clear_confirm_title">Limpiar historial</string>
+    <string name="history_clear_confirm_message">¿Eliminar todas las notificaciones del historial?</string>
+    <string name="btn_cancel">Cancelar</string>
+    <string name="history_deleted">Notificación eliminada</string>
+    <string name="btn_undo">Deshacer</string>
+    <string name="history_filter_all">Todas</string>
+
+    <!-- Status -->
+    <string name="status_online">🟢 Emisor en línea • %1$s</string>
+    <string name="status_offline">🔴 Emisor sin conexión</string>
+    <string name="btn_clear_all">Borrar todo</string>
+    <string name="status_connecting">⏳ Conectando...</string>
+    <string name="notification_channel_name">NotiFlow</string>
+    <string name="notification_waiting">Esperando notificaciones...</string>
+    <string name="btn_privacy_policy">Privacy Policy</string>
+    <string name="btn_donate">☕ Buy me a coffee</string>
+    <string name="btn_reply">Responder</string>
+</resources>
