@@ -11,8 +11,8 @@ android {
         applicationId = "com.lexlebeau.notiflow"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.6.4"
+        versionCode = 20
+        versionName = "1.7.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.work.runtime.ktx)
 
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))

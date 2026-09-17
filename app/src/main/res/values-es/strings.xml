@@ -36,7 +36,13 @@
     <string name="pair_sender_hint">Tu código: %1$s\nMuestra el QR al receptor para escanear</string>
     <string name="pair_success">✅ ¡Vinculado! Código: %1$s</string>
     <string name="pair_error">❌ Código QR inválido</string>
+    <string name="btn_copy_code">📋 Copiar código</string>
+    <string name="pair_code_copied">Copiado</string>
     <string name="btn_scan_qr">📷 Escanear QR del segundo dispositivo</string>
+    <string name="btn_manual_entry">⌨️ Introducir código manualmente</string>
+    <string name="manual_entry_title">Introducir código de vinculación</string>
+    <string name="manual_entry_hint">CÓDIGO:CLAVE</string>
+    <string name="btn_pair">Vincular</string>
     <string name="paired_label">✅ Dispositivos vinculados</string>
     <string name="paired_code">Código de par: %1$s</string>
     <string name="btn_unpair">Desvincular</string>
@@ -51,6 +57,8 @@
     <string name="geo_location_error">No se pudo obtener la ubicación</string>
     <string name="geo_radius">Radio: %1$d m</string>
     <string name="btn_set_home">📍 Establecer ubicación de casa</string>
+    <string name="geo_exempt_title">🔓 Excepciones</string>
+    <string name="geo_exempt_desc">Estas apps te notificarán incluso cuando estés en casa</string>
     <string name="filter_title">📱 Filtro de apps</string>
     <string name="filter_desc">Elige las apps que quieres reflejar</string>
     <string name="btn_hide">ocultar</string>

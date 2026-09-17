@@ -135,6 +135,7 @@ class HistoryActivity : AppCompatActivity() {
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.adapterPosition
+                if (position == RecyclerView.NO_POSITION) return
                 val deletedItem = adapter.removeAt(position)
                 updateEmptyState()
                 var undone = false

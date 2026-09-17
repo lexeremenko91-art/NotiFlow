@@ -2,8 +2,11 @@ package com.lexlebeau.notiflow
 
 import android.Manifest
 import android.content.SharedPreferences
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -108,6 +111,63 @@ class GeoSettingsActivity : AppCompatActivity() {
                     geoStatus.text = getString(R.string.geo_location_error)
                 }
             }
+        }
+
+        val divider = View(this)
+        divider.setBackgroundColor(0xFF222222.toInt())
+        val dividerParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1)
+        dividerParams.setMargins(0, 24, 0, 24)
+        divider.layoutParams = dividerParams
+        layout.addView(divider)
+
+        // Исключения — приложения, уведомления от которых показываются даже дома
+        val exemptTitle = TextView(this)
+        exemptTitle.text = getString(R.string.geo_exempt_title)
+        exemptTitle.textSize = 18f
+        exemptTitle.setTextColor(0xFF1E88E5.toInt())
+        exemptTitle.setPadding(0, 0, 0, 8)
+        layout.addView(exemptTitle)
+
+        val exemptDesc = TextView(this)
+        exemptDesc.text = getString(R.string.geo_exempt_desc)
+        exemptDesc.textSize = 13f
+        exemptDesc.setTextColor(0xFF888888.toInt())
+        exemptDesc.setPadding(0, 0, 0, 16)
+        layout.addView(exemptDesc)
+
+        val pm = packageManager
+        val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
+            .filter {
+                (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 ||
+                        pm.getLaunchIntentForPackage(it.packageName) != null
+            }
+            .filter { it.packageName != "com.lexlebeau.notiflow" }
+            .sortedBy { pm.getApplicationLabel(it).toString() }
+
+        val exemptSet = prefs.getStringSet("geo_exempt_apps", emptySet()) ?: emptySet()
+
+        apps.forEach { appInfo ->
+            val appName = pm.getApplicationLabel(appInfo).toString()
+            val packageName = appInfo.packageName
+
+            val exemptSwitch = Switch(this)
+            exemptSwitch.text = appName
+            exemptSwitch.setTextColor(0xFFFFFFFF.toInt())
+            exemptSwitch.thumbTintList = android.content.res.ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                intArrayOf(0xFF4CAF50.toInt(), 0xFF888888.toInt())
+            )
+            exemptSwitch.trackTintList = android.content.res.ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                intArrayOf(0x884CAF50.toInt(), 0xFF333333.toInt())
+            )
+            exemptSwitch.isChecked = exemptSet.contains(packageName)
+            exemptSwitch.setOnCheckedChangeListener { _, isChecked ->
+                val current = prefs.getStringSet("geo_exempt_apps", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+                if (isChecked) current.add(packageName) else current.remove(packageName)
+                prefs.edit().putStringSet("geo_exempt_apps", current).apply()
+            }
+            layout.addView(exemptSwitch)
         }
 
         scrollView.addView(layout)

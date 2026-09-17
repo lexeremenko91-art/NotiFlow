@@ -42,6 +42,17 @@
         app:layout_constraintStart_toStartOf="parent"/>
 
     <Button
+        android:id="@+id/copyCodeButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="@string/btn_copy_code"
+        android:backgroundTint="#333333"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/statusText"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="24dp"/>
+
+    <Button
         android:id="@+id/scanButton"
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -50,6 +61,16 @@
         app:layout_constraintTop_toBottomOf="@id/statusText"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="24dp"/>
+
+    <Button
+        android:id="@+id/manualEntryButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="@string/btn_manual_entry"
+        android:backgroundTint="#333333"
+        app:layout_constraintTop_toBottomOf="@id/scanButton"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="12dp"/>
 
     <!-- Блок когда спарен -->
     <TextView

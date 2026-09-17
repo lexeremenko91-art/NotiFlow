@@ -36,7 +36,13 @@
     <string name="pair_sender_hint">Your code: %1$s\nShow QR to receiver to scan</string>
     <string name="pair_success">✅ Paired! Code: %1$s</string>
     <string name="pair_error">❌ Invalid QR code</string>
+    <string name="btn_copy_code">📋 Copy code</string>
+    <string name="pair_code_copied">Copied</string>
     <string name="btn_scan_qr">📷 Scan QR of second device</string>
+    <string name="btn_manual_entry">⌨️ Enter code manually</string>
+    <string name="manual_entry_title">Enter pairing code</string>
+    <string name="manual_entry_hint">CODE:KEY</string>
+    <string name="btn_pair">Pair</string>
     <string name="paired_label">✅ Devices paired</string>
     <string name="paired_code">Pair code: %1$s</string>
     <string name="btn_unpair">Unpair</string>
@@ -51,6 +57,8 @@
     <string name="geo_location_error">Could not get location</string>
     <string name="geo_radius">Radius: %1$d m</string>
     <string name="btn_set_home">📍 Set home location</string>
+    <string name="geo_exempt_title">🔓 Exceptions</string>
+    <string name="geo_exempt_desc">These apps will still notify you even when you\'re home</string>
     <string name="filter_title">📱 App filter</string>
     <string name="filter_desc">Choose apps to mirror</string>
     <string name="btn_hide">hide</string>

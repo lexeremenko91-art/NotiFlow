@@ -90,7 +90,8 @@ class ReceiverService : Service() {
             startReceiverHeartbeat(pairCode)
             listenForOnlyMessengers(pairCode)
         }
-        return START_STICKY
+        ReceiverWatchdogWorker.schedule(applicationContext)
+        return START_REDELIVER_INTENT
     }
 
     private fun listenForOnlyMessengers(pairCode: String) {
@@ -176,8 +177,8 @@ class ReceiverService : Service() {
                     val text = if (aesKey != null) CryptoUtils.decrypt(rawText, aesKey) else rawText
                     val appName = if (aesKey != null) CryptoUtils.decrypt(rawAppName, aesKey) else rawAppName
 
-                    // Баг 1 — игнорируем старые уведомления (старше 5 минут)
-                    if (time > 0 && System.currentTimeMillis() - time > 5 * 60 * 1000) {
+                    // Баг 1 — игнорируем старые уведомления (старше 1 минуты)
+                    if (time > 0 && System.currentTimeMillis() - time > 60 * 1000) {
                         Log.d("NotiFlow", "Старое уведомление — пропускаем: $title")
                         snapshot.ref.removeValue()
                         return
@@ -256,8 +257,8 @@ class ReceiverService : Service() {
             val distance = results[0]
             Log.d("NotiFlow", "distance=$distance м, radius=$radius м")
 
-            if (distance > radius) {
-                Log.d("NotiFlow", "Вне дома — показываем")
+            if (distance > radius || isGeoExempt(packageName)) {
+                Log.d("NotiFlow", "Вне дома или в исключениях — показываем")
                 showNotification(packageName, appName, title, text, hasReply)
                 saveToHistory(packageName, appName, title, text, time)
             } else {
@@ -265,6 +266,11 @@ class ReceiverService : Service() {
                 saveToHistory(packageName, appName, title, text, time)
             }
         }
+    }
+
+    private fun isGeoExempt(packageName: String): Boolean {
+        val exemptSet = prefs.getStringSet("geo_exempt_apps", emptySet()) ?: emptySet()
+        return exemptSet.contains(packageName)
     }
 
     private fun requestFreshLocation(
@@ -301,8 +307,8 @@ class ReceiverService : Service() {
                     Location.distanceBetween(freshLocation.latitude, freshLocation.longitude, homeLat, homeLon, results)
                     val distance = results[0]
                     Log.d("NotiFlow", "distance=$distance м, radius=$radius м")
-                    if (distance > radius) {
-                        Log.d("NotiFlow", "Вне дома — показываем")
+                    if (distance > radius || isGeoExempt(packageName)) {
+                        Log.d("NotiFlow", "Вне дома или в исключениях — показываем")
                         showNotification(packageName, appName, title, text, hasReply)
                         saveToHistory(packageName, appName, title, text, time)
                     } else {
@@ -480,4 +486,15 @@ class ReceiverService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    companion object {
+        /** Проверяет, запущен ли ReceiverService прямо сейчас (используется вотчдогом). */
+        fun isServiceRunning(context: android.content.Context): Boolean {
+            val manager = context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+            @Suppress("DEPRECATION")
+            return manager.getRunningServices(Integer.MAX_VALUE).any {
+                it.service.className == ReceiverService::class.java.name
+            }
+        }
+    }
 }

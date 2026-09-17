@@ -36,7 +36,13 @@
     <string name="pair_sender_hint">Твой код: %1$s\nПокажи QR получателю для сканирования</string>
     <string name="pair_success">✅ Спарено! Код: %1$s</string>
     <string name="pair_error">❌ Неверный QR код</string>
+    <string name="btn_copy_code">📋 Скопировать код</string>
+    <string name="pair_code_copied">Скопировано</string>
     <string name="btn_scan_qr">📷 Сканировать QR второго устройства</string>
+    <string name="btn_manual_entry">⌨️ Ввести код вручную</string>
+    <string name="manual_entry_title">Ввод кода спаривания</string>
+    <string name="manual_entry_hint">КОД:КЛЮЧ</string>
+    <string name="btn_pair">Спарить</string>
     <string name="paired_label">✅ Устройства спарены</string>
     <string name="paired_code">Код пары: %1$s</string>
     <string name="btn_unpair">Отвязать</string>
@@ -51,6 +57,8 @@
     <string name="geo_location_error">Не удалось получить локацию</string>
     <string name="geo_radius">Радиус: %1$d м</string>
     <string name="btn_set_home">📍 Установить домашнюю точку</string>
+    <string name="geo_exempt_title">🔓 Исключения</string>
+    <string name="geo_exempt_desc">Эти приложения будут уведомлять, даже когда ты дома</string>
     <string name="filter_title">📱 Фильтр приложений</string>
     <string name="filter_desc">Выбери приложения которые хочешь зеркалить</string>
     <string name="btn_hide">скрыть</string>

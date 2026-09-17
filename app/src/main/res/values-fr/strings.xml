@@ -36,7 +36,13 @@
     <string name="pair_sender_hint">Votre code: %1$s\nMontrez le QR au récepteur pour scanner</string>
     <string name="pair_success">✅ Associé ! Code: %1$s</string>
     <string name="pair_error">❌ QR code invalide</string>
+    <string name="btn_copy_code">📋 Copier le code</string>
+    <string name="pair_code_copied">Copié</string>
     <string name="btn_scan_qr">📷 Scanner le QR du second appareil</string>
+    <string name="btn_manual_entry">⌨️ Saisir le code manuellement</string>
+    <string name="manual_entry_title">Saisir le code d\'association</string>
+    <string name="manual_entry_hint">CODE:CLÉ</string>
+    <string name="btn_pair">Associer</string>
     <string name="paired_label">✅ Appareils associés</string>
     <string name="paired_code">Code d\'association: %1$s</string>
     <string name="btn_unpair">Dissocier</string>
@@ -51,6 +57,8 @@
     <string name="geo_location_error">Impossible d\'obtenir la localisation</string>
     <string name="geo_radius">Rayon: %1$d m</string>
     <string name="btn_set_home">📍 Définir l\'emplacement domicile</string>
+    <string name="geo_exempt_title">🔓 Exceptions</string>
+    <string name="geo_exempt_desc">Ces applications vous notifieront même quand vous êtes chez vous</string>
     <string name="filter_title">📱 Filtre d\'applications</string>
     <string name="filter_desc">Choisissez les applications à refléter</string>
     <string name="btn_hide">masquer</string>

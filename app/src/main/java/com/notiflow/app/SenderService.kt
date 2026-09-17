@@ -29,6 +29,19 @@ class SenderService : NotificationListenerService() {
 
     private var prefsListener: android.content.SharedPreferences.OnSharedPreferenceChangeListener? = null
 
+    /** pairCode, на который уже оформлены Firebase-подписки — защищает от повторной регистрации листенеров. */
+    private var subscribedPairCode: String? = null
+
+    /** Подписывается на Firebase для данного pairCode один раз; повторный вызов с тем же кодом — no-op. */
+    private fun subscribeToPair(pairCode: String) {
+        if (subscribedPairCode == pairCode) return
+        subscribedPairCode = pairCode
+        startHeartbeat(pairCode)
+        startReplyListener(pairCode)
+        startDismissListener(pairCode)
+        startOnlyMessengersListener(pairCode)
+    }
+
     override fun onCreate() {
         super.onCreate()
         prefs = getSharedPreferences("notiflow", MODE_PRIVATE)
@@ -38,19 +51,13 @@ class SenderService : NotificationListenerService() {
 
         val pairCode = prefs.getString("pairCode", null)
         if (pairCode != null) {
-            startHeartbeat(pairCode)
-            startReplyListener(pairCode)
-            startDismissListener(pairCode)
-            startOnlyMessengersListener(pairCode)
+            subscribeToPair(pairCode)
         }
         prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             if (key == "pairCode") {
                 val newPairCode = prefs.getString("pairCode", null)
                 if (newPairCode != null) {
-                    startHeartbeat(newPairCode)
-                    startReplyListener(newPairCode)
-                    startDismissListener(newPairCode)
-                    startOnlyMessengersListener(newPairCode)
+                    subscribeToPair(newPairCode)
                 }
             }
         }
@@ -64,9 +71,8 @@ class SenderService : NotificationListenerService() {
         if (mode != "sender") return
 
         val pairCode = prefs.getString("pairCode", null)
-        if (pairCode != null && heartbeatHandler == null) {
-            startHeartbeat(pairCode)
-            startReplyListener(pairCode)
+        if (pairCode != null) {
+            subscribeToPair(pairCode)
         }
     }
     private fun getBatteryLevel(): Int {

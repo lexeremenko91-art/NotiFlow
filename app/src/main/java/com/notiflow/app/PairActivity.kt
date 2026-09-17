@@ -1,12 +1,17 @@
 package com.lexlebeau.notiflow
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.database.ktx.database
@@ -27,7 +32,9 @@ class PairActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private lateinit var statusText: TextView
     private lateinit var qrImage: ImageView
+    private lateinit var copyCodeButton: Button
     private lateinit var scanButton: Button
+    private lateinit var manualEntryButton: Button
     private lateinit var pairedIcon: TextView
     private lateinit var pairedLabel: TextView
     private lateinit var pairedCode: TextView
@@ -37,27 +44,53 @@ class PairActivity : AppCompatActivity() {
 
     private val scanLauncher = registerForActivityResult(ScanContract()) { result: ScanIntentResult ->
         if (result.contents != null) {
-            val parts = result.contents.split(":")
-            if (parts.size == 2) {
-                val pairCode = parts[0]
-                val aesKey = parts[1]
-                prefs.edit()
-                    .putString("pairCode", pairCode)
-                    .putString("aesKey", aesKey)
-                    .apply()
-                showPairedState(pairCode)
-                val mode = prefs.getString("mode", "sender")
-                if (mode == "receiver") {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                        requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
-                    }
-                    val serviceIntent = android.content.Intent(this, ReceiverService::class.java)
-                    startForegroundService(serviceIntent)
-                }
-            } else {
+            if (!tryPair(result.contents)) {
                 statusText.text = getString(R.string.pair_error)
             }
         }
+    }
+
+    /** Парсит код вида "XXXXXXXX:КЛЮЧ" (как в QR) и спаривает устройства. */
+    private fun tryPair(content: String): Boolean {
+        val parts = content.split(":")
+        if (parts.size != 2 || parts[0].isBlank() || parts[1].isBlank()) {
+            return false
+        }
+        val pairCode = parts[0]
+        val aesKey = parts[1]
+        prefs.edit()
+            .putString("pairCode", pairCode)
+            .putString("aesKey", aesKey)
+            .apply()
+        showPairedState(pairCode)
+        val mode = prefs.getString("mode", "sender")
+        if (mode == "receiver") {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
+            }
+            val serviceIntent = android.content.Intent(this, ReceiverService::class.java)
+            startForegroundService(serviceIntent)
+        }
+        return true
+    }
+
+    private fun showManualEntryDialog() {
+        val input = EditText(this)
+        input.hint = getString(R.string.manual_entry_hint)
+        val padding = (20 * resources.displayMetrics.density).toInt()
+        input.setPadding(padding, padding, padding, padding)
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.manual_entry_title))
+            .setView(input)
+            .setPositiveButton(getString(R.string.btn_pair)) { _, _ ->
+                val code = input.text.toString().trim()
+                if (!tryPair(code)) {
+                    statusText.text = getString(R.string.pair_error)
+                }
+            }
+            .setNegativeButton(getString(R.string.btn_cancel), null)
+            .show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,7 +101,9 @@ class PairActivity : AppCompatActivity() {
         prefs = getSharedPreferences("notiflow", MODE_PRIVATE)
         statusText = findViewById(R.id.statusText)
         qrImage = findViewById(R.id.qrImage)
+        copyCodeButton = findViewById(R.id.copyCodeButton)
         scanButton = findViewById(R.id.scanButton)
+        manualEntryButton = findViewById(R.id.manualEntryButton)
         pairedIcon = findViewById(R.id.pairedIcon)
         pairedLabel = findViewById(R.id.pairedLabel)
         pairedCode = findViewById(R.id.pairedCode)
@@ -117,7 +152,9 @@ class PairActivity : AppCompatActivity() {
             }
 
             statusText.text = getString(R.string.pair_sender_hint, pairCode)
+            copyCodeButton.visibility = View.VISIBLE
             scanButton.visibility = View.GONE
+            manualEntryButton.visibility = View.GONE
 
             // Слушаем receiverOnline в реальном времени
             val finalPairCode = pairCode
@@ -144,6 +181,20 @@ class PairActivity : AppCompatActivity() {
             scanLauncher.launch(options)
         }
 
+        manualEntryButton.setOnClickListener {
+            showManualEntryDialog()
+        }
+
+        copyCodeButton.setOnClickListener {
+            val pairCode = prefs.getString("pairCode", null)
+            val aesKey = prefs.getString("aesKey", null)
+            if (pairCode != null && aesKey != null) {
+                val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("pairCode", "$pairCode:$aesKey"))
+                Toast.makeText(this, getString(R.string.pair_code_copied), Toast.LENGTH_SHORT).show()
+            }
+        }
+
         unpairButton.setOnClickListener {
             prefs.edit()
                 .remove("pairCode")
@@ -168,7 +219,9 @@ class PairActivity : AppCompatActivity() {
     private fun showPairedState(pairCode: String) {
         qrImage.visibility = View.GONE
         statusText.visibility = View.GONE
+        copyCodeButton.visibility = View.GONE
         scanButton.visibility = View.GONE
+        manualEntryButton.visibility = View.GONE
 
         pairedIcon.visibility = View.VISIBLE
         pairedLabel.visibility = View.VISIBLE
@@ -187,6 +240,7 @@ class PairActivity : AppCompatActivity() {
         val mode = prefs.getString("mode", "sender")
         if (mode == "receiver") {
             scanButton.visibility = View.VISIBLE
+            manualEntryButton.visibility = View.VISIBLE
             statusText.visibility = View.VISIBLE
             statusText.text = getString(R.string.pair_receiver_hint)
         } else {
@@ -215,6 +269,7 @@ class PairActivity : AppCompatActivity() {
                 e.printStackTrace()
             }
             statusText.text = getString(R.string.pair_sender_hint, pairCode)
+            copyCodeButton.visibility = View.VISIBLE
         }
     }
 }
