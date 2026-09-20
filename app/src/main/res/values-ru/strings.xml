@@ -28,6 +28,12 @@
     <string name="btn_pair_sender">🔗 Привязать отправителя</string>
     <string name="btn_start">▶ Запустить</string>
     <string name="btn_history">📋 История уведомлений</string>
+    <string name="btn_add_sender">+ Добавить сендер</string>
+    <string name="no_devices_paired">Сендеры ещё не привязаны</string>
+    <string name="device_limit_reached">Достигнут лимит устройств (макс. %1$d)</string>
+    <string name="device_name_dialog_title">Название устройства</string>
+    <string name="device_name_hint">например, «Телефон», «Телефон жены»</string>
+    <string name="btn_save">Сохранить</string>
 
     <!-- Pair -->
     <string name="pair_title">🔗 Спаривание</string>
@@ -43,6 +49,7 @@
     <string name="manual_entry_title">Ввод кода спаривания</string>
     <string name="manual_entry_hint">КОД:КЛЮЧ</string>
     <string name="btn_pair">Спарить</string>
+    <string name="pair_limit_reached">Достигнут лимит устройств (макс. %1$d)</string>
     <string name="paired_label">✅ Устройства спарены</string>
     <string name="paired_code">Код пары: %1$s</string>
     <string name="btn_unpair">Отвязать</string>
@@ -66,6 +73,7 @@
 
     <!-- History -->
     <string name="history_title">📋 История уведомлений</string>
+    <string name="history_select_device">Выбери устройство чтобы посмотреть его историю</string>
     <string name="history_empty">Уведомлений пока нет</string>
     <string name="btn_clear_history">Очистить</string>
     <string name="history_search_hint">Поиск...</string>

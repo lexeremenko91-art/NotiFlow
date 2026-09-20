@@ -13,9 +13,8 @@ class BootReceiver : BroadcastReceiver() {
 
         val prefs = context.getSharedPreferences("notiflow", Context.MODE_PRIVATE)
         val mode = prefs.getString("mode", null)
-        val pairCode = prefs.getString("pairCode", null)
 
-        if (mode == "receiver" && pairCode != null) {
+        if (mode == "receiver" && PairedDevices.getAll(prefs).isNotEmpty()) {
             val serviceIntent = Intent(context, ReceiverService::class.java)
             ContextCompat.startForegroundService(context, serviceIntent)
         }

@@ -18,9 +18,10 @@ class ReceiverWatchdogWorker(
     override suspend fun doWork(): Result {
         val prefs = applicationContext.getSharedPreferences("notiflow", Context.MODE_PRIVATE)
         val mode = prefs.getString("mode", null)
-        val pairCode = prefs.getString("pairCode", null)
 
-        if (mode == "receiver" && pairCode != null && !ReceiverService.isServiceRunning(applicationContext)) {
+        if (mode == "receiver" && PairedDevices.getAll(prefs).isNotEmpty() &&
+            !ReceiverService.isServiceRunning(applicationContext)
+        ) {
             val serviceIntent = Intent(applicationContext, ReceiverService::class.java)
             androidx.core.content.ContextCompat.startForegroundService(applicationContext, serviceIntent)
         }

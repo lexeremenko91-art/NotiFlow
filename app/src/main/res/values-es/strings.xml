@@ -28,6 +28,12 @@
     <string name="btn_pair_sender">🔗 Vincular emisor</string>
     <string name="btn_start">▶ Iniciar</string>
     <string name="btn_history">📋 Historial de notificaciones</string>
+    <string name="btn_add_sender">+ Añadir emisor</string>
+    <string name="no_devices_paired">Aún no hay emisores vinculados</string>
+    <string name="device_limit_reached">Límite de dispositivos alcanzado (máx. %1$d)</string>
+    <string name="device_name_dialog_title">Nombre del dispositivo</string>
+    <string name="device_name_hint">ej. \"Teléfono\", \"Teléfono de mi pareja\"</string>
+    <string name="btn_save">Guardar</string>
 
     <!-- Pair -->
     <string name="pair_title">🔗 Vinculación</string>
@@ -43,6 +49,7 @@
     <string name="manual_entry_title">Introducir código de vinculación</string>
     <string name="manual_entry_hint">CÓDIGO:CLAVE</string>
     <string name="btn_pair">Vincular</string>
+    <string name="pair_limit_reached">Límite de dispositivos alcanzado (máx. %1$d)</string>
     <string name="paired_label">✅ Dispositivos vinculados</string>
     <string name="paired_code">Código de par: %1$s</string>
     <string name="btn_unpair">Desvincular</string>
@@ -66,6 +73,7 @@
 
     <!-- History -->
     <string name="history_title">📋 Historial de notificaciones</string>
+    <string name="history_select_device">Elige un dispositivo para ver su historial</string>
     <string name="history_empty">Aún no hay notificaciones</string>
     <string name="btn_clear_history">Limpiar</string>
     <string name="history_search_hint">Buscar...</string>

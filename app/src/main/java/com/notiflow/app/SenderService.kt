@@ -1,11 +1,18 @@
 package com.lexlebeau.notiflow
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
-import android.os.Handler
-import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ServerValue
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 
@@ -14,8 +21,12 @@ class SenderService : NotificationListenerService() {
     private val database = Firebase.database.reference
     private lateinit var prefs: SharedPreferences
     private val recentNotifications = mutableMapOf<String, Long>()
-    private var heartbeatHandler: Handler? = null
-    private var heartbeatRunnable: Runnable? = null
+    // Presence: online/offline определяет сам Firebase-сервер (onDisconnect), без таймеров и периодических записей.
+    private var presenceRef: DatabaseReference? = null
+    private var connectedListener: ValueEventListener? = null
+    private var isConnected = false
+    private var lastPublishedBattery = -2
+    private var batteryReceiverRegistered = false
     private val currentActions = mutableMapOf<String, Array<android.app.Notification.Action>>()
 
     private val systemBlockedPackages = setOf(
@@ -29,6 +40,19 @@ class SenderService : NotificationListenerService() {
 
     private var prefsListener: android.content.SharedPreferences.OnSharedPreferenceChangeListener? = null
 
+    /** Ключевые слова-фолбэк для мессенджеров, которые не проставляют CATEGORY_CALL верно. */
+    private val callKeywords = listOf(
+        "calling", "incoming call", "video call", "voice call",
+        "звонит", "входящий вызов", "видеозвонок", "аудиозвонок"
+    )
+
+    /** Определяет, что уведомление — о звонке (нативном или из мессенджера), шире чем просто CATEGORY_CALL. */
+    private fun isCallNotification(sbn: StatusBarNotification, title: String, text: String): Boolean {
+        if (sbn.notification.category == android.app.Notification.CATEGORY_CALL) return true
+        val combined = "$title $text".lowercase()
+        return callKeywords.any { combined.contains(it) }
+    }
+
     /** pairCode, на который уже оформлены Firebase-подписки — защищает от повторной регистрации листенеров. */
     private var subscribedPairCode: String? = null
 
@@ -36,7 +60,7 @@ class SenderService : NotificationListenerService() {
     private fun subscribeToPair(pairCode: String) {
         if (subscribedPairCode == pairCode) return
         subscribedPairCode = pairCode
-        startHeartbeat(pairCode)
+        startPresence(pairCode)
         startReplyListener(pairCode)
         startDismissListener(pairCode)
         startOnlyMessengersListener(pairCode)
@@ -129,25 +153,64 @@ class SenderService : NotificationListenerService() {
         }
     }
 
-    private fun startHeartbeat(pairCode: String?) {
-        if (pairCode == null) return
-        heartbeatRunnable?.let { heartbeatHandler?.removeCallbacks(it) }
-        heartbeatHandler = Handler(Looper.getMainLooper())
-        heartbeatRunnable = object : Runnable {
-            override fun run() {
-                val battery = getBatteryLevel()
-                val data = mapOf(
-                    "timestamp" to System.currentTimeMillis(),
-                    "battery" to battery
-                )
-                database.child("pairs").child(pairCode).child("senderOnline")
-                    .setValue(data)
-                    .addOnSuccessListener { Log.d("NotiFlow", "Heartbeat отправлен, battery: $battery%") }
-                    .addOnFailureListener { Log.e("NotiFlow", "Heartbeat ошибка: ${it.message}") }
-                heartbeatHandler?.postDelayed(this, 60000)
+    /**
+     * Presence вместо пульса раз в минуту: при каждом (пере)подключении к Firebase пишем online=true,
+     * а сервер сам выставит online=false, когда соединение оборвётся (onDisconnect). Никаких таймеров,
+     * которые Doze может задержать, и никакого периодического трафика.
+     */
+    private fun startPresence(pairCode: String) {
+        stopPresence()
+        val ref = database.child("pairs").child(pairCode).child("senderOnline")
+        presenceRef = ref
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                isConnected = snapshot.getValue(Boolean::class.java) == true
+                if (!isConnected) return
+                // Сначала регистрируем на сервере действие при обрыве, потом объявляем себя онлайн
+                ref.onDisconnect()
+                    .updateChildren(mapOf("online" to false, "timestamp" to ServerValue.TIMESTAMP))
+                    .addOnSuccessListener { publishPresence() }
             }
+            override fun onCancelled(error: DatabaseError) {}
         }
-        heartbeatHandler?.post(heartbeatRunnable!!)
+        connectedListener = listener
+        database.root.child(".info").child("connected").addValueEventListener(listener)
+
+        if (!batteryReceiverRegistered) {
+            registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            batteryReceiverRegistered = true
+        }
+    }
+
+    private fun publishPresence() {
+        val battery = getBatteryLevel()
+        lastPublishedBattery = battery
+        presenceRef?.updateChildren(
+            mapOf("online" to true, "battery" to battery, "timestamp" to ServerValue.TIMESTAMP)
+        )
+            ?.addOnSuccessListener { Log.d("NotiFlow", "Presence: online, battery: $battery%") }
+            ?.addOnFailureListener { Log.e("NotiFlow", "Presence ошибка: ${it.message}") }
+    }
+
+    private fun stopPresence() {
+        connectedListener?.let { database.root.child(".info").child("connected").removeEventListener(it) }
+        connectedListener = null
+        presenceRef?.onDisconnect()?.cancel()
+        presenceRef = null
+        isConnected = false
+    }
+
+    /** Пишет батарею только при смене процента и только когда есть связь — редкие и крошечные записи. */
+    private val batteryReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val ref = presenceRef ?: return
+            if (!isConnected) return
+            val level = getBatteryLevel()
+            if (level < 0 || level == lastPublishedBattery) return
+            lastPublishedBattery = level
+            ref.updateChildren(mapOf("battery" to level, "timestamp" to ServerValue.TIMESTAMP))
+        }
     }
 
     private fun startReplyListener(pairCode: String) {
@@ -226,11 +289,15 @@ class SenderService : NotificationListenerService() {
         val packageName = sbn.packageName
         val extras = sbn.notification.extras
 
-        // Пропускаем ongoing уведомления (прогресс, звонки и т.д.)
-        if (sbn.notification.flags and android.app.Notification.FLAG_ONGOING_EVENT != 0) return
-
         val title = extras.getString("android.title") ?: ""
         val text = extras.getCharSequence("android.text")?.toString() ?: ""
+
+        // Пропускаем ongoing уведомления (прогресс загрузки, VK-звонки-спам и т.д.) —
+        // кроме входящих звонков: мессенджеры (VK, Telegram, WhatsApp, Teams...) тоже
+        // помечают их FLAG_ONGOING_EVENT, и без исключения звонки просто пропадали.
+        val isOngoing = sbn.notification.flags and android.app.Notification.FLAG_ONGOING_EVENT != 0
+        val isCall = isCallNotification(sbn, title, text)
+        if (isOngoing && !isCall) return
 
         if (title.isEmpty() && text.isEmpty()) return
 
@@ -251,9 +318,16 @@ class SenderService : NotificationListenerService() {
         val blockedApps = prefs.getStringSet("blocked_apps", emptySet()) ?: emptySet()
         if (blockedApps.contains(packageName)) return
 
-        // Дедупликация групповых уведомлений — берём только последнее из группы
+        // Дедупликация: для звонков — по packageName+title без текста (мессенджеры могут
+        // переотправлять ongoing-уведомление звонка с меняющимся текстом, например тикающим
+        // таймером, но это тот же самый звонок — иначе долетал бы дубль на каждый апдейт).
+        // Для остальных групповых уведомлений — берём только последнее из группы.
         val groupKey = sbn.notification.group
-        val key = if (groupKey != null) "$packageName|$groupKey" else "$packageName|$title|$text"
+        val key = when {
+            isCall -> "$packageName|call|$title"
+            groupKey != null -> "$packageName|$groupKey"
+            else -> "$packageName|$title|$text"
+        }
         val now = System.currentTimeMillis()
         val lastSent = recentNotifications[key] ?: 0L
         if (now - lastSent < 3000) {
@@ -329,7 +403,12 @@ class SenderService : NotificationListenerService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        heartbeatRunnable?.let { heartbeatHandler?.removeCallbacks(it) }
+        presenceRef?.updateChildren(mapOf("online" to false, "timestamp" to ServerValue.TIMESTAMP))
+        stopPresence()
+        if (batteryReceiverRegistered) {
+            unregisterReceiver(batteryReceiver)
+            batteryReceiverRegistered = false
+        }
         prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
     }
 }

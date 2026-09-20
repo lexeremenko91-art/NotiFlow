@@ -2,17 +2,30 @@ package com.lexlebeau.notiflow
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Gravity
 import android.widget.Button
-import android.widget.Switch
+import android.widget.LinearLayout
+import android.widget.RadioButton
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 
 class ReceiverActivity : AppCompatActivity() {
 
     private lateinit var startButton: Button
     private lateinit var statusText: TextView
-    private lateinit var geoSwitch: Switch
+    private lateinit var devicesContainer: LinearLayout
+    private lateinit var addSenderButton: Button
     private lateinit var prefs: android.content.SharedPreferences
+
+    private val onlineListeners = mutableMapOf<String, ValueEventListener>()
 
     private fun isServiceRunning(serviceClass: Class<*>): Boolean {
         val manager = getSystemService(ACTIVITY_SERVICE) as android.app.ActivityManager
@@ -24,16 +37,7 @@ class ReceiverActivity : AppCompatActivity() {
         val isRunning = isServiceRunning(ReceiverService::class.java)
         startButton.text = if (isRunning) "⏹ Stop" else getString(R.string.btn_start)
         startButton.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            if (isRunning) 0xFFE53935.toInt() else 0xFF43A047.toInt()
-        )
-    }
-
-    private fun updateSwitchColors(isChecked: Boolean) {
-        geoSwitch.thumbTintList = android.content.res.ColorStateList.valueOf(
-            if (isChecked) 0xFF4CAF50.toInt() else 0xFF888888.toInt()
-        )
-        geoSwitch.trackTintList = android.content.res.ColorStateList.valueOf(
-            if (isChecked) 0x884CAF50.toInt() else 0x88888888.toInt()
+            ContextCompat.getColor(this, if (isRunning) R.color.color_accent_danger else R.color.color_accent_success)
         )
     }
 
@@ -44,31 +48,32 @@ class ReceiverActivity : AppCompatActivity() {
         prefs = getSharedPreferences("notiflow", MODE_PRIVATE)
         statusText = findViewById(R.id.statusText)
         startButton = findViewById(R.id.startButton)
-        geoSwitch = findViewById(R.id.geoSwitch)
-        val pairButton = findViewById<Button>(R.id.pairButton)
+        devicesContainer = findViewById(R.id.devicesContainer)
+        addSenderButton = findViewById(R.id.addSenderButton)
         val historyButton = findViewById<Button>(R.id.historyButton)
         val switchModeButton = findViewById<Button>(R.id.switchModeButton)
-        val geoSettingsButton = findViewById<Button>(R.id.geoSettingsButton)
 
-        geoSwitch.isChecked = prefs.getBoolean("geo_enabled", false)
-        updateSwitchColors(geoSwitch.isChecked)
-
-        geoSwitch.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("geo_enabled", isChecked).apply()
-            updateSwitchColors(isChecked)
-            NotiFlowWidget.updateWidget(this)
-        }
-
-        geoSettingsButton.setOnClickListener {
-            startActivity(Intent(this, GeoSettingsActivity::class.java))
-        }
-
-        pairButton.setOnClickListener {
-            startActivity(Intent(this, PairActivity::class.java))
+        addSenderButton.setOnClickListener {
+            if (PairedDevices.getAll(prefs).size >= PairedDevices.MAX_DEVICES) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.device_limit_reached, PairedDevices.MAX_DEVICES),
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                startActivity(Intent(this, PairActivity::class.java))
+            }
         }
 
         historyButton.setOnClickListener {
-            startActivity(Intent(this, HistoryActivity::class.java))
+            val devices = PairedDevices.getAll(prefs)
+            if (devices.size > 1) {
+                startActivity(Intent(this, HistoryDeviceListActivity::class.java))
+            } else {
+                val intent = Intent(this, HistoryActivity::class.java)
+                devices.firstOrNull()?.let { intent.putExtra("pairCode", it.pairCode) }
+                startActivity(intent)
+            }
         }
 
         updateStartButton()
@@ -107,15 +112,167 @@ class ReceiverActivity : AppCompatActivity() {
             intent.data = android.net.Uri.parse("https://buymeacoffee.com/lexlebeau")
             startActivity(intent)
         }
+
+        renderDeviceList()
     }
 
     override fun onResume() {
         super.onResume()
         updateStartButton()
-        geoSwitch.isChecked = prefs.getBoolean("geo_enabled", false)
-        updateSwitchColors(geoSwitch.isChecked)
         if (isServiceRunning(ReceiverService::class.java)) {
             statusText.text = getString(R.string.receiver_status_ok)
+        }
+        renderDeviceList()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        detachAllListeners()
+    }
+
+    private fun detachAllListeners() {
+        onlineListeners.forEach { (pairCode, listener) ->
+            Firebase.database.reference.child("pairs").child(pairCode).child("senderOnline")
+                .removeEventListener(listener)
+        }
+        onlineListeners.clear()
+    }
+
+    private fun renderDeviceList() {
+        detachAllListeners()
+        devicesContainer.removeAllViews()
+
+        val devices = PairedDevices.getAll(prefs)
+        val primary = PairedDevices.getPrimary(prefs)
+
+        if (devices.isEmpty()) {
+            val emptyText = TextView(this).apply {
+                text = getString(R.string.no_devices_paired)
+                setTextColor(ContextCompat.getColor(this@ReceiverActivity, R.color.color_text_disabled))
+                textSize = 13f
+            }
+            devicesContainer.addView(emptyText)
+            return
+        }
+
+        devices.forEach { device ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(0, 16, 0, 16)
+            }
+
+            val primaryRadio = RadioButton(this).apply {
+                isChecked = device.pairCode == primary
+                setOnClickListener {
+                    PairedDevices.setPrimary(prefs, device.pairCode)
+                    NotiFlowWidget.updateWidget(this@ReceiverActivity)
+                    renderDeviceList()
+                }
+            }
+            row.addView(primaryRadio)
+
+            val infoColumn = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val nameText = TextView(this).apply {
+                text = device.label
+                setTextColor(ContextCompat.getColor(this@ReceiverActivity, R.color.color_text_primary))
+                textSize = 15f
+                setOnClickListener {
+                    showDeviceLabelDialog(this@ReceiverActivity, device.label) { newLabel ->
+                        PairedDevices.add(prefs, device.pairCode, device.aesKey, newLabel)
+                        renderDeviceList()
+                    }
+                }
+            }
+            val statusTextView = TextView(this).apply {
+                text = "…"
+                textSize = 12f
+                setTextColor(ContextCompat.getColor(this@ReceiverActivity, R.color.color_text_tertiary))
+            }
+            infoColumn.addView(nameText)
+            infoColumn.addView(statusTextView)
+            row.addView(infoColumn)
+
+            val gearButton = Button(this).apply {
+                text = "⚙️"
+                textSize = 16f
+                setPadding(0, 0, 0, 0)
+                backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    ContextCompat.getColor(this@ReceiverActivity, R.color.color_surface)
+                )
+                layoutParams = LinearLayout.LayoutParams(120, 120)
+                setOnClickListener {
+                    val intent = Intent(this@ReceiverActivity, GeoSettingsActivity::class.java)
+                    intent.putExtra("pairCode", device.pairCode)
+                    startActivity(intent)
+                }
+            }
+            row.addView(gearButton)
+
+            val renameButton = Button(this).apply {
+                text = "✏️"
+                textSize = 16f
+                setPadding(0, 0, 0, 0)
+                backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    ContextCompat.getColor(this@ReceiverActivity, R.color.color_surface)
+                )
+                layoutParams = LinearLayout.LayoutParams(120, 120).apply { marginStart = 12 }
+                setOnClickListener {
+                    showDeviceLabelDialog(this@ReceiverActivity, device.label) { newLabel ->
+                        PairedDevices.add(prefs, device.pairCode, device.aesKey, newLabel)
+                        renderDeviceList()
+                    }
+                }
+            }
+            row.addView(renameButton)
+
+            val unpairBtn = Button(this).apply {
+                text = "✕"
+                textSize = 16f
+                setPadding(0, 0, 0, 0)
+                backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    ContextCompat.getColor(this@ReceiverActivity, R.color.color_accent_danger_strong)
+                )
+                layoutParams = LinearLayout.LayoutParams(120, 120).apply { marginStart = 12 }
+                setOnClickListener {
+                    AlertDialog.Builder(this@ReceiverActivity)
+                        .setTitle(getString(R.string.btn_unpair))
+                        .setMessage(device.label)
+                        .setPositiveButton(getString(R.string.btn_unpair)) { _, _ ->
+                            PairedDevices.remove(prefs, device.pairCode)
+                            val serviceIntent = Intent(this@ReceiverActivity, ReceiverService::class.java).apply {
+                                action = ReceiverService.ACTION_UNPAIR_DEVICE
+                                putExtra(ReceiverService.EXTRA_PAIR_CODE, device.pairCode)
+                            }
+                            ContextCompat.startForegroundService(this@ReceiverActivity, serviceIntent)
+                            renderDeviceList()
+                            NotiFlowWidget.updateWidget(this@ReceiverActivity)
+                        }
+                        .setNegativeButton(getString(R.string.btn_cancel), null)
+                        .show()
+                }
+            }
+            row.addView(unpairBtn)
+
+            devicesContainer.addView(row)
+
+            val listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val ts = snapshot.child("timestamp").getValue(Long::class.java) ?: 0L
+                    // Флаг online ведёт сам сендер через onDisconnect; для старых сендеров — по свежести пульса
+                    val online = snapshot.child("online").getValue(Boolean::class.java)
+                        ?: (System.currentTimeMillis() - ts < 90000)
+                    statusTextView.text = if (online) "🟢 online" else "🔴 offline"
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            }
+            Firebase.database.reference
+                .child("pairs").child(device.pairCode).child("senderOnline")
+                .addValueEventListener(listener)
+            onlineListeners[device.pairCode] = listener
         }
     }
 }

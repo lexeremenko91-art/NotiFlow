@@ -43,6 +43,7 @@
             android:exported="false"
             android:screenOrientation="portrait"/>
         <activity android:name=".HistoryActivity" android:exported="false" android:theme="@style/Theme.NotiFlow"/>
+        <activity android:name=".HistoryDeviceListActivity" android:exported="false" android:theme="@style/Theme.NotiFlow"/>
         <activity android:name=".SettingsActivity" android:exported="false"/>
         <activity android:name=".GeoSettingsActivity" android:exported="false"/>
 

@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.gms.location.LocationServices
@@ -29,13 +30,13 @@ class SettingsActivity : AppCompatActivity() {
         val layout = LinearLayout(this)
         layout.orientation = LinearLayout.VERTICAL
         layout.setPadding(32, 32, 32, 32)
-        layout.setBackgroundColor(0xFF0A0A0A.toInt())
-        scrollView.setBackgroundColor(0xFF0A0A0A.toInt())
+        layout.setBackgroundColor(ContextCompat.getColor(this, R.color.color_background))
+        scrollView.setBackgroundColor(ContextCompat.getColor(this, R.color.color_background))
 
         val title = TextView(this)
         title.text = getString(R.string.settings_title)
         title.textSize = 24f
-        title.setTextColor(0xFFFFFFFF.toInt())
+        title.setTextColor(ContextCompat.getColor(this, R.color.color_text_primary))
         title.setPadding(0, 0, 0, 32)
         layout.addView(title)
 
@@ -43,36 +44,29 @@ class SettingsActivity : AppCompatActivity() {
         val screenTitle = TextView(this)
         screenTitle.text = "📱 " + getString(R.string.screen_filter_title)
         screenTitle.textSize = 18f
-        screenTitle.setTextColor(0xFF1E88E5.toInt())
+        screenTitle.setTextColor(ContextCompat.getColor(this, R.color.color_accent_primary))
         screenTitle.setPadding(0, 0, 0, 8)
         layout.addView(screenTitle)
 
         val screenDesc = TextView(this)
         screenDesc.text = getString(R.string.screen_filter_desc)
         screenDesc.textSize = 13f
-        screenDesc.setTextColor(0xFF888888.toInt())
+        screenDesc.setTextColor(ContextCompat.getColor(this, R.color.color_text_tertiary))
         screenDesc.setPadding(0, 0, 0, 16)
         layout.addView(screenDesc)
 
         val screenSwitch = Switch(this)
         screenSwitch.text = getString(R.string.screen_filter_switch)
-        screenSwitch.setTextColor(0xFFFFFFFF.toInt())
+        screenSwitch.setTextColor(ContextCompat.getColor(this, R.color.color_text_primary))
         screenSwitch.isChecked = prefs.getBoolean("block_when_unlocked", false)
-        screenSwitch.thumbTintList = android.content.res.ColorStateList(
-            arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-            intArrayOf(0xFF4CAF50.toInt(), 0xFF888888.toInt())
-        )
-        screenSwitch.trackTintList = android.content.res.ColorStateList(
-            arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-            intArrayOf(0x884CAF50.toInt(), 0xFF333333.toInt())
-        )
+        styleSwitch(this, screenSwitch)
         screenSwitch.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("block_when_unlocked", isChecked).apply()
         }
         layout.addView(screenSwitch)
 
         val divider = View(this)
-        divider.setBackgroundColor(0xFF222222.toInt())
+        divider.setBackgroundColor(ContextCompat.getColor(this, R.color.color_divider))
         val dividerParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1)
         dividerParams.setMargins(0, 24, 0, 24)
         divider.layoutParams = dividerParams
@@ -81,29 +75,22 @@ class SettingsActivity : AppCompatActivity() {
         val messengersTitle = TextView(this)
         messengersTitle.text = "💬 " + getString(R.string.messengers_title)
         messengersTitle.textSize = 18f
-        messengersTitle.setTextColor(0xFF1E88E5.toInt())
+        messengersTitle.setTextColor(ContextCompat.getColor(this, R.color.color_accent_primary))
         messengersTitle.setPadding(0, 0, 0, 8)
         layout.addView(messengersTitle)
 
         val messengersDesc = TextView(this)
         messengersDesc.text = getString(R.string.messengers_desc)
         messengersDesc.textSize = 13f
-        messengersDesc.setTextColor(0xFF888888.toInt())
+        messengersDesc.setTextColor(ContextCompat.getColor(this, R.color.color_text_tertiary))
         messengersDesc.setPadding(0, 0, 0, 16)
         layout.addView(messengersDesc)
 
         val messengersSwitch = Switch(this)
         messengersSwitch.text = getString(R.string.messengers_switch)
-        messengersSwitch.setTextColor(0xFFFFFFFF.toInt())
+        messengersSwitch.setTextColor(ContextCompat.getColor(this, R.color.color_text_primary))
         messengersSwitch.isChecked = prefs.getBoolean("only_messengers", false)
-        messengersSwitch.thumbTintList = android.content.res.ColorStateList(
-            arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-            intArrayOf(0xFF4CAF50.toInt(), 0xFF888888.toInt())
-        )
-        messengersSwitch.trackTintList = android.content.res.ColorStateList(
-            arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-            intArrayOf(0x884CAF50.toInt(), 0xFF333333.toInt())
-        )
+        styleSwitch(this, messengersSwitch)
         messengersSwitch.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("only_messengers", isChecked).apply()
             val pairCode = prefs.getString("pairCode", null)
@@ -139,7 +126,7 @@ class SettingsActivity : AppCompatActivity() {
         layout.addView(messengersSwitch)
 
         val divider2 = View(this)
-        divider2.setBackgroundColor(0xFF222222.toInt())
+        divider2.setBackgroundColor(ContextCompat.getColor(this, R.color.color_divider))
         val dividerParams2 = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1)
         dividerParams2.setMargins(0, 24, 0, 24)
         divider2.layoutParams = dividerParams2
@@ -149,14 +136,14 @@ class SettingsActivity : AppCompatActivity() {
         val filterTitle = TextView(this)
         filterTitle.text = getString(R.string.filter_title)
         filterTitle.textSize = 18f
-        filterTitle.setTextColor(0xFF1E88E5.toInt())
+        filterTitle.setTextColor(ContextCompat.getColor(this, R.color.color_accent_primary))
         filterTitle.setPadding(0, 0, 0, 8)
         layout.addView(filterTitle)
 
         val filterDesc = TextView(this)
         filterDesc.text = getString(R.string.filter_desc)
         filterDesc.textSize = 13f
-        filterDesc.setTextColor(0xFF888888.toInt())
+        filterDesc.setTextColor(ContextCompat.getColor(this, R.color.color_text_tertiary))
         filterDesc.setPadding(0, 0, 0, 16)
         layout.addView(filterDesc)
 
@@ -183,15 +170,8 @@ class SettingsActivity : AppCompatActivity() {
 
             val enableSwitch = Switch(this)
             enableSwitch.text = appName
-            enableSwitch.setTextColor(0xFFFFFFFF.toInt())
-            enableSwitch.thumbTintList = android.content.res.ColorStateList(
-                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                intArrayOf(0xFF4CAF50.toInt(), 0xFF888888.toInt())
-            )
-            enableSwitch.trackTintList = android.content.res.ColorStateList(
-                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                intArrayOf(0x884CAF50.toInt(), 0xFF333333.toInt())
-            )
+            enableSwitch.setTextColor(ContextCompat.getColor(this, R.color.color_text_primary))
+            styleSwitch(this, enableSwitch)
             enableSwitch.isChecked = !blockedSet.contains(packageName)
             val switchParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             enableSwitch.layoutParams = switchParams
@@ -201,8 +181,18 @@ class SettingsActivity : AppCompatActivity() {
             else getString(R.string.btn_hide)
             sensitiveBtn.textSize = 11f
             sensitiveBtn.setPadding(16, 4, 16, 4)
-            sensitiveBtn.setTextColor(if (sensitiveSet.contains(packageName)) 0xFFFFFFFF.toInt() else 0xFF1E88E5.toInt())
-            sensitiveBtn.setBackgroundColor(if (sensitiveSet.contains(packageName)) 0xFF1E88E5.toInt() else 0xFF1A2332.toInt())
+            sensitiveBtn.setTextColor(
+                ContextCompat.getColor(
+                    this,
+                    if (sensitiveSet.contains(packageName)) R.color.white else R.color.color_accent_primary
+                )
+            )
+            sensitiveBtn.setBackgroundColor(
+                ContextCompat.getColor(
+                    this,
+                    if (sensitiveSet.contains(packageName)) R.color.color_accent_primary else R.color.color_surface
+                )
+            )
 
             enableSwitch.setOnCheckedChangeListener { _, isChecked ->
                 val current = prefs.getStringSet("blocked_apps", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
@@ -215,13 +205,13 @@ class SettingsActivity : AppCompatActivity() {
                 if (current.contains(packageName)) {
                     current.remove(packageName)
                     sensitiveBtn.text = getString(R.string.btn_hide)
-                    sensitiveBtn.setTextColor(0xFF1E88E5.toInt())
-                    sensitiveBtn.setBackgroundColor(0xFF1A2332.toInt())
+                    sensitiveBtn.setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.color_accent_primary))
+                    sensitiveBtn.setBackgroundColor(ContextCompat.getColor(this@SettingsActivity, R.color.color_surface))
                 } else {
                     current.add(packageName)
                     sensitiveBtn.text = getString(R.string.btn_hidden)
-                    sensitiveBtn.setTextColor(0xFFFFFFFF.toInt())
-                    sensitiveBtn.setBackgroundColor(0xFF1E88E5.toInt())
+                    sensitiveBtn.setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.white))
+                    sensitiveBtn.setBackgroundColor(ContextCompat.getColor(this@SettingsActivity, R.color.color_accent_primary))
                 }
                 prefs.edit().putStringSet("sensitive_apps", current).apply()
             }

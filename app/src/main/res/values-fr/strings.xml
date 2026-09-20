@@ -28,6 +28,12 @@
     <string name="btn_pair_sender">🔗 Associer l\'émetteur</string>
     <string name="btn_start">▶ Démarrer</string>
     <string name="btn_history">📋 Historique des notifications</string>
+    <string name="btn_add_sender">+ Ajouter un émetteur</string>
+    <string name="no_devices_paired">Aucun émetteur associé pour l\'instant</string>
+    <string name="device_limit_reached">Limite d\'appareils atteinte (max. %1$d)</string>
+    <string name="device_name_dialog_title">Nom de l\'appareil</string>
+    <string name="device_name_hint">ex. \"Téléphone\", \"Téléphone de ma femme\"</string>
+    <string name="btn_save">Enregistrer</string>
 
     <!-- Pair -->
     <string name="pair_title">🔗 Association</string>
@@ -43,6 +49,7 @@
     <string name="manual_entry_title">Saisir le code d\'association</string>
     <string name="manual_entry_hint">CODE:CLÉ</string>
     <string name="btn_pair">Associer</string>
+    <string name="pair_limit_reached">Limite d\'appareils atteinte (max. %1$d)</string>
     <string name="paired_label">✅ Appareils associés</string>
     <string name="paired_code">Code d\'association: %1$s</string>
     <string name="btn_unpair">Dissocier</string>
@@ -66,6 +73,7 @@
 
     <!-- History -->
     <string name="history_title">📋 Historique des notifications</string>
+    <string name="history_select_device">Choisissez un appareil pour voir son historique</string>
     <string name="history_empty">Pas encore de notifications</string>
     <string name="btn_clear_history">Effacer</string>
     <string name="history_search_hint">Rechercher...</string>

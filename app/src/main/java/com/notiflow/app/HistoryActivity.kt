@@ -2,7 +2,6 @@ package com.lexlebeau.notiflow
 
 import android.content.SharedPreferences
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -16,6 +15,7 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,7 +31,8 @@ data class HistoryItem(
     val appName: String,
     val title: String,
     val text: String,
-    val time: Long
+    val time: Long,
+    val pairCode: String?
 )
 
 class HistoryAdapter(
@@ -103,16 +104,24 @@ class HistoryActivity : AppCompatActivity() {
     private lateinit var emptyText: TextView
     private lateinit var recyclerView: RecyclerView
     private lateinit var chipGroup: ChipGroup
+    private var filterPairCode: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_history)
 
         historyPrefs = getSharedPreferences("notiflow_history", MODE_PRIVATE)
+        filterPairCode = intent.getStringExtra("pairCode")
+        val deviceLabel = intent.getStringExtra("deviceLabel")
 
         emptyText = findViewById(R.id.emptyText)
         recyclerView = findViewById(R.id.recyclerView)
         chipGroup = findViewById(R.id.chipGroup)
+
+        if (deviceLabel != null) {
+            findViewById<TextView>(R.id.titleText).text =
+                getString(R.string.history_title) + " — " + deviceLabel
+        }
 
         val items = loadItems()
         adapter = HistoryAdapter(items)
@@ -124,9 +133,9 @@ class HistoryActivity : AppCompatActivity() {
 
         // Свайп для удаления
         val swipeCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-            private val background = ColorDrawable(Color.parseColor("#C62828"))
+            private val background = ColorDrawable(ContextCompat.getColor(this@HistoryActivity, R.color.color_accent_danger_strong))
             private val paint = Paint().apply {
-                color = Color.WHITE
+                color = ContextCompat.getColor(this@HistoryActivity, R.color.white)
                 textSize = 48f
                 textAlign = Paint.Align.CENTER
             }
@@ -213,7 +222,7 @@ class HistoryActivity : AppCompatActivity() {
         allChip.isCheckable = true
         allChip.isChecked = true
         allChip.setChipBackgroundColorResource(android.R.color.transparent)
-        allChip.setTextColor(getColor(android.R.color.white))
+        allChip.setTextColor(ContextCompat.getColor(this, R.color.color_text_primary))
         chipGroup.addView(allChip)
 
         adapter.getAppNames().forEach { appName ->
@@ -221,7 +230,7 @@ class HistoryActivity : AppCompatActivity() {
             chip.text = appName
             chip.isCheckable = true
             chip.setChipBackgroundColorResource(android.R.color.transparent)
-            chip.setTextColor(getColor(android.R.color.white))
+            chip.setTextColor(ContextCompat.getColor(this, R.color.color_text_primary))
             chipGroup.addView(chip)
         }
 
@@ -235,6 +244,9 @@ class HistoryActivity : AppCompatActivity() {
     }
 
     private fun loadItems(): MutableList<HistoryItem> {
+        val appPrefs = getSharedPreferences("notiflow", MODE_PRIVATE)
+        val primaryPairCode = PairedDevices.getPrimary(appPrefs)
+
         return historyPrefs.all.entries
             .mapNotNull { (key, v) ->
                 if (v is String) {
@@ -249,17 +261,23 @@ class HistoryActivity : AppCompatActivity() {
                                 packageName.substringAfterLast(".")
                             }
                         }
+                        // Записи до введения мульти-устройств не имеют pairCode —
+                        // относим их к основному устройству.
+                        val storedPairCode = if (parts.size >= 6 && parts[5].isNotBlank()) parts[5] else null
+                        val effectivePairCode = storedPairCode ?: primaryPairCode
                         HistoryItem(
                             key = key,
                             packageName = packageName,
                             appName = appName,
                             title = parts[1],
                             text = parts[2],
-                            time = parts[3].toLongOrNull() ?: 0L
+                            time = parts[3].toLongOrNull() ?: 0L,
+                            pairCode = effectivePairCode
                         )
                     } else null
                 } else null
             }
+            .filter { filterPairCode == null || it.pairCode == filterPairCode }
             .sortedByDescending { it.time }
             .toMutableList()
     }

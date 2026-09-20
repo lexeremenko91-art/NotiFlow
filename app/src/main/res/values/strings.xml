@@ -28,6 +28,12 @@
     <string name="btn_pair_sender">🔗 Pair sender</string>
     <string name="btn_start">▶ Start</string>
     <string name="btn_history">📋 Notification history</string>
+    <string name="btn_add_sender">+ Add sender</string>
+    <string name="no_devices_paired">No senders paired yet</string>
+    <string name="device_limit_reached">Device limit reached (%1$d max)</string>
+    <string name="device_name_dialog_title">Device name</string>
+    <string name="device_name_hint">e.g. \"Phone\", \"Wife\'s phone\"</string>
+    <string name="btn_save">Save</string>
 
     <!-- Pair -->
     <string name="pair_title">🔗 Pairing</string>
@@ -43,6 +49,7 @@
     <string name="manual_entry_title">Enter pairing code</string>
     <string name="manual_entry_hint">CODE:KEY</string>
     <string name="btn_pair">Pair</string>
+    <string name="pair_limit_reached">Device limit reached (%1$d max)</string>
     <string name="paired_label">✅ Devices paired</string>
     <string name="paired_code">Pair code: %1$s</string>
     <string name="btn_unpair">Unpair</string>
@@ -66,6 +73,7 @@
 
     <!-- History -->
     <string name="history_title">📋 Notification history</string>
+    <string name="history_select_device">Choose a device to view its history</string>
     <string name="history_empty">No notifications yet</string>
     <string name="btn_clear_history">Clear</string>
     <string name="history_search_hint">Search...</string>

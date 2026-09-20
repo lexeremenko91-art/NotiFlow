@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="24dp"
-    android:background="#1A2332"
+    android:background="@color/color_surface"
     android:layout_marginBottom="16dp">
 
     <TextView
@@ -13,14 +13,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="12sp"
-        android:textColor="#1E88E5"/>
+        android:textColor="@color/color_accent_primary"/>
 
     <TextView
         android:id="@+id/titleText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="15sp"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/color_text_primary"
         android:paddingTop="6dp"
         android:paddingBottom="4dp"/>
 
@@ -29,6 +29,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="13sp"
-        android:textColor="#AAAAAA"/>
+        android:textColor="@color/color_text_secondary"/>
 
 </LinearLayout>

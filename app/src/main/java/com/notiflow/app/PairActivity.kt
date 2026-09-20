@@ -58,18 +58,32 @@ class PairActivity : AppCompatActivity() {
         }
         val pairCode = parts[0]
         val aesKey = parts[1]
-        prefs.edit()
-            .putString("pairCode", pairCode)
-            .putString("aesKey", aesKey)
-            .apply()
-        showPairedState(pairCode)
         val mode = prefs.getString("mode", "sender")
+
         if (mode == "receiver") {
+            val added = PairedDevices.add(prefs, pairCode, aesKey, pairCode)
+            if (!added) {
+                statusText.visibility = View.VISIBLE
+                statusText.text = getString(R.string.pair_limit_reached, PairedDevices.MAX_DEVICES)
+                return true
+            }
+            currentPairCode = pairCode
+            showPairedState(pairCode)
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                 requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
             }
             val serviceIntent = android.content.Intent(this, ReceiverService::class.java)
             startForegroundService(serviceIntent)
+
+            showDeviceLabelDialog(this, pairCode) { newLabel ->
+                PairedDevices.add(prefs, pairCode, aesKey, newLabel)
+            }
+        } else {
+            prefs.edit()
+                .putString("pairCode", pairCode)
+                .putString("aesKey", aesKey)
+                .apply()
+            showPairedState(pairCode)
         }
         return true
     }
@@ -114,12 +128,10 @@ class PairActivity : AppCompatActivity() {
         val existingAesKey = prefs.getString("aesKey", null)
 
         if (mode == "receiver") {
+            // Каждый заход в PairActivity в режиме ресивера — это добавление нового сендера,
+            // а не замена уже спаренных устройств (см. PairedDevices).
             qrImage.visibility = View.GONE
-            if (existingPairCode != null) {
-                showPairedState(existingPairCode)
-            } else {
-                statusText.text = getString(R.string.pair_receiver_hint)
-            }
+            statusText.text = getString(R.string.pair_receiver_hint)
         } else {
             var pairCode = existingPairCode
             var aesKey = existingAesKey
@@ -196,10 +208,22 @@ class PairActivity : AppCompatActivity() {
         }
 
         unpairButton.setOnClickListener {
-            prefs.edit()
-                .remove("pairCode")
-                .remove("aesKey")
-                .apply()
+            val currentMode = prefs.getString("mode", "sender")
+            if (currentMode == "receiver") {
+                currentPairCode?.let { code ->
+                    PairedDevices.remove(prefs, code)
+                    val intent = android.content.Intent(this, ReceiverService::class.java).apply {
+                        action = ReceiverService.ACTION_UNPAIR_DEVICE
+                        putExtra(ReceiverService.EXTRA_PAIR_CODE, code)
+                    }
+                    androidx.core.content.ContextCompat.startForegroundService(this, intent)
+                }
+            } else {
+                prefs.edit()
+                    .remove("pairCode")
+                    .remove("aesKey")
+                    .apply()
+            }
             showUnpairedState()
         }
     }

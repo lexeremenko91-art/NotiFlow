@@ -27,6 +27,7 @@ class NotiFlowWidget : AppWidgetProvider() {
         fun updateAppWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
             val prefs = context.getSharedPreferences("notiflow", Context.MODE_PRIVATE)
             val views = RemoteViews(context.packageName, R.layout.widget_layout)
+            val primaryPairCode = PairedDevices.getPrimary(prefs)
 
             // Пауза/Плей
             val isRunning = isServiceRunning(context, ReceiverService::class.java)
@@ -35,21 +36,23 @@ class NotiFlowWidget : AppWidgetProvider() {
                 if (isRunning) R.drawable.ic_widget_play else R.drawable.ic_widget_pause
             )
 
-            // Только мессенджеры
-            val onlyMessengers = prefs.getBoolean("only_messengers", false)
+            // Только мессенджеры (для основного устройства)
+            val onlyMessengers = primaryPairCode != null &&
+                    prefs.getBoolean("only_messengers_$primaryPairCode", false)
             views.setInt(R.id.btnMessengers, "setColorFilter",
                 if (onlyMessengers) 0xFF2196F3.toInt() else 0xFF888888.toInt())
             Log.d("NotiFlow", "Widget updateAppWidget: only_messengers=$onlyMessengers")
 
-            // Геофенсинг
-            val geoEnabled = prefs.getBoolean("geo_enabled", false)
+            // Геофенсинг (для основного устройства)
+            val geoEnabled = primaryPairCode != null &&
+                    prefs.getBoolean("geo_enabled_$primaryPairCode", false)
             views.setInt(R.id.btnGeo, "setColorFilter",
                 if (geoEnabled) 0xFF2196F3.toInt() else 0xFF888888.toInt())
 
             // Батарея
             val battery = prefs.getInt("sender_battery", -1)
-            val senderTimestamp = prefs.getLong("sender_timestamp", 0L)
-            val isOnline = System.currentTimeMillis() - senderTimestamp < 90000
+            // sender_online пишет ReceiverService; если он остановлен — данные не обновляются, считаем офлайн
+            val isOnline = isRunning && prefs.getBoolean("sender_online", false)
             views.setInt(R.id.batteryIcon, "setColorFilter",
                 when {
                     !isOnline -> 0xFF888888.toInt()
@@ -112,17 +115,18 @@ class NotiFlowWidget : AppWidgetProvider() {
                 }
             }
             ACTION_TOGGLE_MESSENGERS -> {
-                val pairCode = prefs.getString("pairCode", null) ?: return
-                val current = prefs.getBoolean("only_messengers", false)
+                val pairCode = PairedDevices.getPrimary(prefs) ?: return
+                val current = prefs.getBoolean("only_messengers_$pairCode", false)
                 val newValue = !current
-                prefs.edit().putBoolean("only_messengers", newValue).apply()
+                prefs.edit().putBoolean("only_messengers_$pairCode", newValue).apply()
                 com.google.firebase.ktx.Firebase.database.reference
                     .child("pairs").child(pairCode).child("commands").child("onlyMessengers")
                     .setValue(newValue)
             }
             ACTION_TOGGLE_GEO -> {
-                val current = prefs.getBoolean("geo_enabled", false)
-                prefs.edit().putBoolean("geo_enabled", !current).apply()
+                val pairCode = PairedDevices.getPrimary(prefs) ?: return
+                val current = prefs.getBoolean("geo_enabled_$pairCode", false)
+                prefs.edit().putBoolean("geo_enabled_$pairCode", !current).apply()
             }
         }
         updateWidget(context)
